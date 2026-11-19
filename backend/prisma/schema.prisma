@@ -1,0 +1,104 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         String    @default("CUSTOMER")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+  cartItems    CartItem[]
+  orders       Order[]
+  addresses    Address[]
+}
+model Session {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tokenHash String   @unique
+  userId    String   @db.ObjectId
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+model Category {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  name     String    @unique
+  slug     String    @unique
+  products Product[]
+}
+model Product {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  slug        String      @unique
+  description String
+  pricePKR    Int
+  priceUSD    Int
+  image       String
+  stock       Int         @default(0)
+  featured    Boolean     @default(false)
+  active      Boolean     @default(true)
+  categoryId  String      @db.ObjectId
+  createdAt   DateTime    @default(now())
+  category    Category    @relation(fields: [categoryId], references: [id])
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  @@index([categoryId])
+}
+model CartItem {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String  @db.ObjectId
+  productId String  @db.ObjectId
+  quantity  Int     @default(1)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@unique([userId, productId])
+}
+model Address {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String  @db.ObjectId
+  fullName  String
+  phone     String
+  line1     String
+  city      String
+  country   String  @default("Pakistan")
+  postal    String?
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model Order {
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String      @db.ObjectId
+  status         String      @default("PENDING")
+  paymentMethod  String
+  paymentStatus  String      @default("UNPAID")
+  currency       String
+  total          Int
+  customerName   String
+  phone          String
+  address        String
+  city           String
+  createdAt      DateTime    @default(now())
+  user           User        @relation(fields: [userId], references: [id])
+  items          OrderItem[]
+  @@index([userId, createdAt])
+}
+model OrderItem {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String  @db.ObjectId
+  productId String  @db.ObjectId
+  name      String
+  price     Int
+  quantity  Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
