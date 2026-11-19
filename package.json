@@ -9,10 +9,10 @@
     "build": "npm --prefix backend run build && npm --prefix frontend run build",
     "start": "next start frontend",
     "lint": "eslint .",
-    "db:push": "dotenv -e backend/.env -- prisma db push --schema backend/prisma/schema.prisma",
+    "db:push": "npm --prefix backend run db:push",
     "db:seed": "dotenv -e backend/.env -- node backend/prisma/seed.js",
-    "db:studio": "dotenv -e backend/.env -- prisma studio --schema backend/prisma/schema.prisma",
-    "postinstall": "dotenv -e backend/.env -- prisma generate --schema backend/prisma/schema.prisma"
+    "db:studio": "npm --prefix backend run db:studio",
+    "postinstall": "node backend/scripts/prisma-command.cjs generate && node frontend/scripts/prisma-command.cjs generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

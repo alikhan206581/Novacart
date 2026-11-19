@@ -55,13 +55,13 @@ A multi-category storefront with animated UI, MongoDB + Prisma persistence, sepa
 - PKR online payments are deliberately not falsely marked as working: integrate a supported local provider (for example, a merchant-approved gateway) and verify its server-side callback/webhook before enabling PKR online payment.
 - Never put secret payment keys in `NEXT_PUBLIC_*` variables.
 
-## Deploy frontend and backend as separate Vercel projects
-1. Import the GitHub repository into Vercel. Set the project root directory to `/backend`. The backend project builds from `backend/package.json`.
-2. Set backend environment variables from `backend/.env.example`, including `DATABASE_URL`, a strong `AUTH_SECRET`, and `APP_URL` (the storefront's Vercel URL). Keep credentials in Vercel's Environment Variables, not Git.
-3. Deploy the backend project and copy its Vercel production origin.
-4. Import the same repository into Vercel again as a second project. Set its root directory to `/frontend`.
-5. Set the frontend variable `BACKEND_API_URL` to the backend Vercel origin, with no `/api` suffix, then deploy.
-6. The storefront proxies browser `/api/*` requests to the backend, and server-rendered pages call the backend API directly. The frontend does not connect to MongoDB.
+## Deploy as one Vercel project
+1. Import the GitHub repository into Vercel and set the project root directory to `/frontend`.
+2. Leave `BACKEND_API_URL` unset in Vercel. The frontend serves the API routes from the backend code in the same deployment.
+3. Add `DATABASE_URL`, a strong `AUTH_SECRET`, and `APP_URL` (the Vercel production URL) to the Vercel project's Environment Variables. Add `STRIPE_SECRET_KEY` only if enabling online payments. Never commit secrets.
+4. Deploy. MongoDB access is performed by the server-side API routes; the browser never receives MongoDB credentials.
+
+The root `npm run dev` keeps the backend on port 3001 and frontend on port 3000 for local development. Set `BACKEND_API_URL=http://localhost:3001` in `frontend/.env` to use that local backend; the deployed single-project setup leaves it unset.
 
 ## Important production checklist
 This is a runnable starter, not a production-certified commerce system. Before public launch:
