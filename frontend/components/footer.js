@@ -1,1 +1,3 @@
-export default function Footer(){return <footer className="footer"><div><div className="logo">nova<span>cart</span></div><p>Discover more. Shop smarter.</p></div><div><b>Explore</b><a href="/products">All products</a><a href="/account">My account</a><a href="/orders">My orders</a></div><div><b>Customer care</b><span>Secure checkout</span><span>Order support</span><span>© {new Date().getFullYear()} NovaCart</span></div></footer>}
+import Link from "next/link";
+
+export default function Footer(){return <footer className="footer"><div><div className="logo">nova<span>cart</span></div><p>Discover more. Shop smarter.</p></div><div><b>Explore</b><Link href="/products">All products</Link><Link href="/account">My account</Link><Link href="/orders">My orders</Link></div><div><b>Customer care</b><span>Secure checkout</span><span>Order support</span><span>© {new Date().getFullYear()} NovaCart</span></div></footer>}

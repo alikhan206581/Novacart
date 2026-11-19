@@ -51,9 +51,16 @@ A multi-category storefront with animated UI, MongoDB + Prisma persistence, sepa
   ```powershell
   npm install stripe
   ```
-  Set `STRIPE_SECRET_KEY` in `backend/.env` and `APP_URL` in `frontend/.env`. Add and verify a Stripe webhook before using this in production to mark paid orders as paid.
+  Set `STRIPE_SECRET_KEY` and the frontend `APP_URL` in the relevant provider environments. Add and verify a Stripe webhook before using this in production to mark paid orders as paid.
 - PKR online payments are deliberately not falsely marked as working: integrate a supported local provider (for example, a merchant-approved gateway) and verify its server-side callback/webhook before enabling PKR online payment.
 - Never put secret payment keys in `NEXT_PUBLIC_*` variables.
+
+## Deploy frontend to Vercel and API to Railway
+1. Import the GitHub repository into Railway as a new service. Set its root directory to `/backend`; Railway uses `backend/package.json` to build and start the API. Generate a public domain and confirm `https://<railway-domain>/health` returns `{"ok":true}`.
+2. Set Railway variables from `backend/.env.example`: `DATABASE_URL`, a strong `AUTH_SECRET`, `APP_URL` (the Vercel site URL), and optional Stripe/admin values. Use Railway's Variables panel; do not commit `.env` files.
+3. Import the same GitHub repository into Vercel and set the root directory to `frontend`. Enable **Include source files outside of the Root Directory in the Build Step**. Set Vercel variables from `frontend/.env.example`: `DATABASE_URL` and `BACKEND_API_URL` (the Railway service origin, with no `/api` suffix), plus `APP_URL` if needed.
+4. Deploy the Vercel project. Then update Railway's `APP_URL` to the final Vercel production URL and redeploy/restart the Railway service.
+5. Vercel proxies `/api/*` to Railway so browser requests and session cookies stay on the Vercel origin.
 
 ## Important production checklist
 This is a runnable starter, not a production-certified commerce system. Before public launch:
