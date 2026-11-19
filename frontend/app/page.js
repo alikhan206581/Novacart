@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { ArrowRight, Zap, ShieldCheck, Truck, Headphones } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { currentUser } from "@/lib/auth";
+import { backendJson } from "@/lib/backend";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import ProductCard from "@/components/product-card";
 export const dynamic="force-dynamic";
 export default async function Home(){
- const [user,products,categories]=await Promise.all([currentUser(),prisma.product.findMany({where:{active:true,featured:true},include:{category:true},take:8,orderBy:{createdAt:"desc"}}),prisma.category.findMany({take:8})]);
+ const {response,data}=await backendJson("/storefront");
+ if(!response.ok)throw new Error(`Could not load storefront (${response.status}).`);
+ const {user,products,categories}=data;
  return <><Header user={user}/><main><section className="hero"><div className="hero-copy"><div className="eyebrow"><span className="pulse"/> THE EVERYDAY MARKETPLACE</div><h1>Good finds.<br/><em>Great feelings.</em></h1><p>From the latest tech to everyday essentials — discover products that make life better.</p> <div className="hero-buttons"><Link className="btn btn-dark" href="/products">Explore collection <ArrowRight size={18}/></Link><Link className="text-link" href="/products">Discover what&apos;s new</Link></div><div className="hero-proof"><span>✦ Curated products</span><span>✦ Secure shopping</span><span>✦ Easy checkout</span></div></div><div className="hero-art"><div className="hero-orb orb-one"/><div className="hero-orb orb-two"/><div className="hero-photo"><img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1000&q=85" alt=""/></div><div className="floating-card float-a">✦ <b>Fresh finds</b><small>Every single day</small></div><div className="floating-card float-b">✧ <b>Shop your way</b><small>PKR or USD</small></div><div className="hero-sticker">THE<br/>GOOD<br/>STUFF</div></div></section>
  <section className="benefits"><div><Truck/><span><b>Delivery options</b><small>Convenient delivery</small></span></div><div><ShieldCheck/><span><b>Secure shopping</b><small>Protected accounts</small></span></div><div><Zap/><span><b>Fresh discoveries</b><small>New products to explore</small></span></div><div><Headphones/><span><b>Here to help</b><small>Customer support</small></span></div></section>
  <section className="section"><div className="section-heading"><div><div className="eyebrow">BROWSE YOUR WAY</div><h2>Explore categories</h2></div><Link href="/products" className="text-link">All products <ArrowRight size={16}/></Link></div><div className="category-grid">{categories.map((c,i)=><Link className={`category-tile tile-${i%4}`} href={`/products?category=${c.slug}`} key={c.id}><span>{["✳","◈","✦","❋","✧","⬡","✺","◇"][i%8]}</span><b>{c.name}</b><small>Explore collection →</small></Link>)}</div></section>

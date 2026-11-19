@@ -7,13 +7,14 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const nextConfig = {
   outputFileTracingRoot: root,
   async rewrites() {
-    const backendUrl = process.env.BACKEND_API_URL?.replace(/\/+$/, "");
-    if (!backendUrl) return [];
+    const configuredUrl = process.env.BACKEND_API_URL;
+    const backendUrl = configuredUrl || (process.env.VERCEL ? null : "http://localhost:3001");
+    if (!backendUrl) throw new Error("BACKEND_API_URL must be set for Vercel deployments.");
     return {
       beforeFiles: [
         {
           source: "/api/:path*",
-          destination: `${backendUrl}/api/:path*`,
+          destination: `${backendUrl.replace(/\/+$/, "")}/api/:path*`,
         },
       ],
     };

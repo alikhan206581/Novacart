@@ -8,6 +8,83 @@ function json(data, status = 200) {
   return NextResponse.json(data, { status });
 }
 
+async function storefront() {
+  const [user, products, categories] = await Promise.all([
+    currentUser(),
+    prisma.product.findMany({
+      where: { active: true, featured: true },
+      include: { category: true },
+      take: 8,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.category.findMany({ take: 8 }),
+  ]);
+  return json({ user, products, categories });
+}
+
+async function productCatalog(req) {
+  const searchParams = req.nextUrl.searchParams;
+  const [user, categories, products] = await Promise.all([
+    currentUser(),
+    prisma.category.findMany(),
+    prisma.product.findMany({
+      where: {
+        active: true,
+        ...(searchParams.get("category") ? { category: { slug: searchParams.get("category") } } : {}),
+        ...(searchParams.get("q") ? { name: { contains: searchParams.get("q") } } : {}),
+      },
+      include: { category: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+  return json({ user, categories, products });
+}
+
+async function productDetail(slug) {
+  const [product, user] = await Promise.all([
+    prisma.product.findUnique({ where: { slug }, include: { category: true } }),
+    currentUser(),
+  ]);
+  if (!product || !product.active) return json({ error: "Product not found." }, 404);
+  return json({ product, user });
+}
+
+async function account() {
+  const user = await currentUser();
+  if (!user) return json({ error: "Sign in required." }, 401);
+  const recentOrders = await prisma.order.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+  });
+  return json({ user, recentOrders });
+}
+
+async function adminDashboard() {
+  const user = await currentUser();
+  if (!user) return json({ error: "Sign in required." }, 401);
+  if (user.role !== "ADMIN") return json({ error: "Forbidden." }, 403);
+  const [products, orders, users, categories] = await Promise.all([
+    prisma.product.findMany({ include: { category: true }, orderBy: { createdAt: "desc" } }),
+    prisma.order.findMany({ include: { user: true }, orderBy: { createdAt: "desc" }, take: 30 }),
+    prisma.user.findMany({
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.category.findMany(),
+  ]);
+  return json({
+    user,
+    products,
+    orders: orders.map((order) => ({
+      ...order,
+      user: { name: order.user.name, email: order.user.email },
+    })),
+    users,
+    categories,
+  });
+}
+
 async function register(req) {
   try {
     const schema = z.object({
@@ -234,6 +311,13 @@ async function adminOrders(req) {
 export async function dispatch(method, req) {
   const path = req.nextUrl.pathname.replace(/\/+$/, "") || "/";
 
+  if (path === "/api/storefront" && method === "GET") return storefront();
+  if (path === "/api/products" && method === "GET") return productCatalog(req);
+  if (path === "/api/auth/me" && method === "GET") return json({ user: await currentUser() });
+  if (path === "/api/account" && method === "GET") return account();
+  if (path === "/api/admin/dashboard" && method === "GET") return adminDashboard();
+  const productMatch = path.match(/^\/api\/products\/([^/]+)$/);
+  if (productMatch && method === "GET") return productDetail(decodeURIComponent(productMatch[1]));
   if (path === "/api/auth/register" && method === "POST") return register(req);
   if (path === "/api/auth/login" && method === "POST") return login(req);
   if (path === "/api/auth/logout" && method === "POST") return logout();

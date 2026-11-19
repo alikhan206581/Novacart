@@ -37,7 +37,7 @@ A multi-category storefront with animated UI, MongoDB + Prisma persistence, sepa
    ```powershell
    npm run dev
    ```
-9. Visit http://localhost:3000
+   This starts the backend API on port 3001 and the storefront on port 3000. Visit http://localhost:3000.
 
 ## Currency
 - Products have separate `pricePKR` and `priceUSD` values.
@@ -55,12 +55,13 @@ A multi-category storefront with animated UI, MongoDB + Prisma persistence, sepa
 - PKR online payments are deliberately not falsely marked as working: integrate a supported local provider (for example, a merchant-approved gateway) and verify its server-side callback/webhook before enabling PKR online payment.
 - Never put secret payment keys in `NEXT_PUBLIC_*` variables.
 
-## Deploy frontend to Vercel and API to Railway
-1. Import the GitHub repository into Railway as a new service. Set its root directory to `/backend`; Railway uses `backend/package.json` to build and start the API. Generate a public domain and confirm `https://<railway-domain>/health` returns `{"ok":true}`.
-2. Set Railway variables from `backend/.env.example`: `DATABASE_URL`, a strong `AUTH_SECRET`, `APP_URL` (the Vercel site URL), and optional Stripe/admin values. Use Railway's Variables panel; do not commit `.env` files.
-3. Import the same GitHub repository into Vercel and set the root directory to `frontend`. Enable **Include source files outside of the Root Directory in the Build Step**. Set Vercel variables from `frontend/.env.example`: `DATABASE_URL` and `BACKEND_API_URL` (the Railway service origin, with no `/api` suffix), plus `APP_URL` if needed.
-4. Deploy the Vercel project. Then update Railway's `APP_URL` to the final Vercel production URL and redeploy/restart the Railway service.
-5. Vercel proxies `/api/*` to Railway so browser requests and session cookies stay on the Vercel origin.
+## Deploy frontend and backend as separate Vercel projects
+1. Import the GitHub repository into Vercel. Set the project root directory to `/backend`. The backend project builds from `backend/package.json`.
+2. Set backend environment variables from `backend/.env.example`, including `DATABASE_URL`, a strong `AUTH_SECRET`, and `APP_URL` (the storefront's Vercel URL). Keep credentials in Vercel's Environment Variables, not Git.
+3. Deploy the backend project and copy its Vercel production origin.
+4. Import the same repository into Vercel again as a second project. Set its root directory to `/frontend`.
+5. Set the frontend variable `BACKEND_API_URL` to the backend Vercel origin, with no `/api` suffix, then deploy.
+6. The storefront proxies browser `/api/*` requests to the backend, and server-rendered pages call the backend API directly. The frontend does not connect to MongoDB.
 
 ## Important production checklist
 This is a runnable starter, not a production-certified commerce system. Before public launch:

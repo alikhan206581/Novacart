@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev frontend",
-    "build": "dotenv -e backend/.env -- prisma generate --schema backend/prisma/schema.prisma && next build frontend",
+    "dev": "concurrently -k -n backend,frontend \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
     "start": "next start frontend",
     "lint": "eslint .",
     "db:push": "dotenv -e backend/.env -- prisma db push --schema backend/prisma/schema.prisma",
@@ -30,6 +32,7 @@
     "eslint-config-next": "^15.5.6",
     "prisma": "^6.19.0",
     "@eslint/eslintrc": "^3.3.1",
+    "concurrently": "^9.2.1",
     "dotenv-cli": "^10.0.0"
   }
 }

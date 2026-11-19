@@ -1,5 +1,7 @@
 import { dispatch } from "../../../routes";
 
+export const runtime = "nodejs";
+
 export function GET(req) {
   return dispatch("GET", req);
 }
